@@ -1,19 +1,33 @@
-from collections import defaultdict
+#!/bin/bash
 
-def collect_files(input_dir, output_dir, max_depth=None):
-    files = defaultdict(list)
+if [ "$#" -lt 2 ]; then
+    exit 1
+fi
 
-    return files
+input_dir="$1"
+output_dir="$2"
 
-def test_collect_files_max_depth():
-    input_dir = "path_to_input_dir"
-    output_dir = "path_to_output_dir"
-    expected_files = {
-        'file1.txt': 'path_to_file1.txt',
-        'file2.txt': 'path_to_file2.txt',
-        'file3.txt': 'path_to_file3.txt',
-    }
+max_depth=""
+if [ "$#" -eq 4 ] && [ "$3" == "--max_depth" ]; then
+    max_depth="-maxdepth $4"
+fi
 
-    result = collect_files(input_dir, output_dir, max_depth=3)
-    
-    assert dict(result) == expected_files
+mkdir -p "$output_dir"
+
+process_files() {
+    local dir="$1"
+    local output="$2"
+
+    find "$dir" $max_depth -type f | while read file; do
+        base_name=$(basename "$file")
+        dest_file="$output/$base_name"
+        counter=1
+        while [ -f "$dest_file" ]; do
+            dest_file="${output}/${base_name%.*}_$counter.${base_name##*.}"
+            ((counter++))
+        done
+        cp "$file" "$dest_file"
+    done
+}
+
+process_files "$input_dir" "$output_dir"
